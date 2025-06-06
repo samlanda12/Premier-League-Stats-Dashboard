@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Premier League Stats Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"> <!--google fonts-->
+     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}"> <!--link to css stylesheet-->
+     <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style> <!--make font-->
+</head>
+<body>
+
+    <img src="/static/images/premier-league-logo.png" alt="Premier League Logo" class="banner"> <!--banner-->
+
+    <h1>Premier League Stats Dashboard ⚽</h1> <!--main header-->
+
+ <!--form-->
+    <form method="POST" style="text-align:center;">
+        <label for="season">Select Season:</label>
+        <select name="season" id="season" required>
+            {% for season in season_options %}
+                <option value="{{ season }}">{{ season }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="club">Select Club:</label>
+        <select name="club" id="club" class="club-dropdown" required>
+            {% for club in club_options %}
+                <option value="{{ club }}" {% if request.form.club == club %}selected{% endif %}>
+                    {{ club.title() }}
+                </option>
+            {% endfor %}
+        </select>
+
+
+        <br>
+        <button type="submit">Generate Stats</button>
+    </form>
+
+    {% if plot_url %}
+    <div style="text-align:center; margin-bottom:20px;">
+        <img src="{{ url_for('static', filename='club_logos/' + request.form.club.replace(' ', '_').lower() + '.png') }}"
+            alt="{{ club }} logo"
+            class="club-logo"><br>
+        <h2 class="club-title">{{ club.title() }} - Season {{ season }}</h2>
+    </div>
+        <img src="{{ url_for('static', filename='plots/club_plot.png') }}" alt="Club Stats Plot">
+    {% endif %}
+
+    {% if message %}
+        <p style="text-align:center; font-size:20px; margin-top:20px;">{{ message }}</p>
+    {% endif %}
+
+    {% if stats_summary %}
+        <div class="stats-summary">
+            <ul style="list-style:none; padding:0;">
+                {% for key, value in stats_summary.items() %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <footer>
+        Built by Sam Landa | Premier League Stats Dashboard
+    </footer>
+
+</body>
+</html>

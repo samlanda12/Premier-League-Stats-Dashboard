@@ -1,0 +1,5 @@
+data/results.csv
+static/plots/
+.venv/
+.idea/
+__pycache__/
