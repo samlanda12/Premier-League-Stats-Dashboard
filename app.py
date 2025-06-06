@@ -7,6 +7,8 @@ app = Flask(__name__)
 
 @app.route('/', methods = ['GET', 'POST'])
 def index():
+    # right now, you're loading all data on every load of the app - that's inefficient. Look into flask blueprint classes and make it do the data load once, on flask app initialization load.
+    # it will then cache this data in memory and you'll write a separate endpoint to control reload of it if needed to refresh the cache
     gs = load_data() #load the data
 
     season_options = sorted(gs['season'].dropna().unique())
@@ -58,7 +60,8 @@ def index():
                 'Wins': wins,
                 'Draws': draws,
                 'Losses': losses}
-
+        # you're repeating a lot of code here, try to find a way to do this without doing so :)
+        
         return render_template(
             'index.html',
             season_options = season_options,
