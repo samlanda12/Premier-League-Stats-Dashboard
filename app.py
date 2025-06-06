@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from analysis import load_data
+from analysis import load_data, generate_stats_summary
 from visualize import visualize
 import matplotlib.pyplot as plt
 
@@ -47,37 +47,17 @@ def index():
             plt.close()
             plot_url = plot_filename
 
-            # stat summary variables
-            total_goals_scored = int(club_df[club_df['scoring_team'] == club]['gh'].sum() + club_df[club_df['scoring_team'] == club]['ga'].sum())
-            wins = (club_df['winner'] == club).sum()
-            draws = (club_df['winner'] == 'Draw').sum()
-            losses = len(club_df) - wins - draws
+            stats_summary = generate_stats_summary(club_df, club)
 
-            stats_summary = {
-                'Total Goals Scored': total_goals_scored,
-                'Wins': wins,
-                'Draws': draws,
-                'Losses': losses}
-
-        return render_template(
-            'index.html',
-            season_options = season_options,
-            club_options = club_options,
-            plot_url = plot_url,
-            message = message,
-            stats_summary = stats_summary,
-            club = club,
-            season = season)
-    
     return render_template(
         'index.html',
-        season_options = season_options,
-        club_options = club_options,
-        plot_url = None,
-        message = None,
-        stats_summary = None,
-        club = club,
-        season = season)
+        season_options=season_options,
+        club_options=club_options,
+        plot_url=plot_url,
+        message=message,
+        stats_summary=stats_summary,
+        club=club,
+        season=season)
 
 if __name__ == '__main__':
     app.run(debug=True)

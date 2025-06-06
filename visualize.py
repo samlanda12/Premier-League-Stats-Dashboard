@@ -20,15 +20,9 @@ def visualize(club_df, club, season):
         plt.ylabel("Player")
 
     plt.subplot(3, 2, 2)  # make second viz
-    results = []  # make lists for results
-    for _, match in club_df.iterrows():
-        if match['winner'] == club:
-            results.append('Win')  # make win field
-        elif match['winner'] == 'Draw':
-            results.append('Draw')  # make draw field
-        else:
-            results.append('Loss')  # make loss field
-    results_df = pd.DataFrame({'Result': results})  # make a results df
+    results_df = pd.DataFrame({
+        'Result': club_df['winner'].map(lambda x: 'Win' if x == club else 'Draw' if x == 'Draw' else 'Loss')
+    })
     colors = {'Win': 'green', 'Draw': 'gray', 'Loss': 'red'}  # make dict for viz colors
     sns.countplot(data=results_df, x='Result', hue='Result', palette=colors,
                   legend=False)  # plot result distribution and make color based on result

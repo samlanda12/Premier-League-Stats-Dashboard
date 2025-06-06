@@ -17,18 +17,9 @@ def load_data():
     gs['away_team'] = sliced_away.str.join(' ')
 
     #take out 'fc' from home and away for better merge
-    home_split = gs['home_team'].str.split()
-    away_split = gs['away_team'].str.split()
-    scoring_split = gs['scoring_team'].str.split()
-    take_home_fc = home_split.str[-1] == 'fc'
-    take_away_fc = away_split.str[-1] == 'fc'
-    take_scoring_fc = scoring_split.str[-1] == 'FC'
-    home_split[take_home_fc] = home_split[take_home_fc].str.slice(0, -1)
-    away_split[take_away_fc] = away_split[take_away_fc].str.slice(0, -1)
-    scoring_split[take_scoring_fc] = scoring_split[take_scoring_fc].str.slice(0, -1)
-    gs['home_team'] = home_split.str.join(' ')
-    gs['away_team'] = away_split.str.join(' ')
-    gs['scoring_team'] = scoring_split.str.join(' ')
+    gs = clean_team_names(gs, 'home_team')
+    gs = clean_team_names(gs, 'away_team')
+    gs = clean_team_names(gs, 'scoring_team')
 
     #dictionary to match found mismatches
     team_name_fixes = {'brighton & hove albion': 'brighton hove albion', 'wimbledon': 'afc wimbledon'}
@@ -46,14 +37,8 @@ def load_data():
     df['away'] = df['away'].str.strip().str.lower()
 
     #take out fc for better merge
-    home_split_df = df['home'].str.split()
-    away_split_df = df['away'].str.split()
-    take_home_fc_df = home_split_df.str[-1] == 'fc'
-    take_away_fc_df = away_split_df.str[-1] == 'fc'
-    home_split_df[take_home_fc_df] = home_split_df[take_home_fc_df].str.slice(0, -1)
-    away_split_df[take_away_fc_df] = away_split_df[take_away_fc_df].str.slice(0, -1)
-    df['home'] = home_split_df.str.join(' ')
-    df['away'] = away_split_df.str.join(' ')
+    df = clean_team_names(df, 'home')
+    df = clean_team_names(df, 'away')
 
     #get unique game id
     df['game'] = df['home'] + ' vs. ' + df['away']
@@ -69,13 +54,23 @@ def load_data():
     gs = gs.drop(columns=['GH', 'GA'], errors='ignore') # remove old rows
     gs = gs.merge(df[['gameid', 'gh', 'ga']], on='gameid', how='left') #merge new rows
 
-    def determine_winner(row): #function to extract match winner
-        if row['gh'] > row['ga']:
-            return row['home_team']
-        elif row['gh'] < row['ga']:
-            return row['away_team']
-        else:
-            return 'Draw'
+    gs['winner'] = gs['home_team']
+    gs.loc[gs['gh'] < gs['ga'], 'winner'] = gs['away_team']
+    gs.loc[gs['gh'] == gs['ga'], 'winner'] = 'Draw'
 
-    gs['winner'] = gs.apply(determine_winner, axis=1) #create winner field
     return gs
+
+def clean_team_names(df, team_column):
+    split = df[team_column].str.split()
+    take_fc = split.str[-1].str.lower() == 'fc'
+    split[take_fc] = split[take_fc].str.slice(0, -1)
+    df[team_column] = split.str.join(' ')
+    return df
+
+def generate_stats_summary(club_df, club):
+    return {
+        'Total Goals Scored': int(club_df[club_df['scoring_team'] == club]['gh'].sum() + club_df[club_df['scoring_team'] == club]['ga'].sum()),
+        'Wins': (club_df['winner'] == club).sum(),
+        'Draws': (club_df['winner'] == 'Draw').sum(),
+        'Losses': len(club_df) - (club_df['winner'] == club).sum() - (club_df['winner'] == 'Draw').sum()
+    }

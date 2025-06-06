@@ -34,9 +34,7 @@
             {% endfor %}
         </select>
 
-
-        <br>
-        <button type="submit">Generate Stats</button>
+        <button type="submit" id="generate-button">Generate Stats</button>
     </form>
 
     {% if plot_url %}
@@ -55,6 +53,7 @@
 
     {% if stats_summary %}
         <div class="stats-summary">
+            <h3>Stats Summary for {{ club.title() }} - Season {{ season }}</h3>
             <ul style="list-style:none; padding:0;">
                 {% for key, value in stats_summary.items() %}
                     <li><strong>{{ key }}:</strong> {{ value }}</li>

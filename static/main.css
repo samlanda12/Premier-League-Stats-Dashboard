@@ -4,6 +4,7 @@ body {
     color: #ffffff;
     padding: 20px;
     margin: 0;
+    text-align: center;
 } /* page background and font */
 
 .banner {
@@ -36,54 +37,81 @@ select:hover {
 } /* dropdown hover effect */
 
 button {
-    background-color: #28a745; /* soccer green */
+    background-color: #4CAF50;
     color: white;
+    padding: 12px 24px;
     font-size: 18px;
-    padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    transition: background-color 0.3s ease;
-} /* show stat button */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.3s ease;
+    letter-spacing: 0.5px;
+}
 
 button:hover {
-    background-color: #218838;
-    transform: scale(1.05);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px); /* pop up slightly */
+    background-color: #43a047; /* darker green on hover */
+}
+
+button:active {
+    transform: translateY(1px); /* pressed down */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    background-color: #388e3c; /* even darker when pressed */
 }
 
 .club-logo {
     height: 80px;
+    display: block;
+    margin: 0 auto 10px auto; /* center + space below */
 }
 
 .club-title {
     margin-top: 10px;
+    font-size: 26px;
     color: white;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+    text-align: center; /* ensure centered */
 }
 
 .stats-summary {
     background: rgba(23, 88, 32, 0.8);
-    padding: 10px;
-    margin: 10px auto;
-    width: fit-content;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
     border-radius: 8px;
-    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+}
+
+.stats-summary h3 {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #ffffff;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 .stats-summary li {
-    font-size: 16px;
-    margin: 5px 0;
+    font-size: 18px;
+    margin: 8px 0;
+    line-height: 1.5;
 }
 
 img {
     display: block;
     margin: 10px auto;
     max-width: 90%;
-    border: 3px solid rgba(23, 88, 32, 0.8);
+    border: 2px solid rgba(23, 88, 32, 0.8);
     border-radius: 5px;
     box-shadow: 5px 5px 10px rgba(0,0,0,0.7);
 } /* style for viz */
+
+.message {
+    color: #f44336;
+    font-size: 18px;
+    margin: 20px 0;
+}
 
 footer {
     text-align: center;
