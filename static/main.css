@@ -1,4 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'); /* font import */
+
 body {
+    font-family: 'Roboto', sans-serif;
     background: url('/static/images/wayne2.jpeg') no-repeat center center fixed;
     background-size: cover;
     color: #ffffff;
@@ -19,6 +22,10 @@ h1 {
     margin-bottom: 30px;
     color: #ffffff;
     text-shadow: 2px 2px #000000; /* subtle shadow */
+}
+
+form {
+    text-align: center;
 }
 
 select {
@@ -108,6 +115,7 @@ img {
 } /* style for viz */
 
 .message {
+    text-align: center;
     color: #f44336;
     font-size: 18px;
     margin: 20px 0;
