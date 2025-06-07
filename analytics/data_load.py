@@ -2,7 +2,7 @@
 import pandas as pd
 
 def load_data():
-    df = pd.read_csv('data/results.csv')
+    df = pd.read_csv('data/results_trimmed.csv')
     gs = pd.read_csv('data/eng-premier-league.csv')
 
     #clean gs
