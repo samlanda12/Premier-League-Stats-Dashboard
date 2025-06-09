@@ -65,4 +65,10 @@ def visualize(club_df, club, season):
     sns.lineplot(data=club_df, x='date_dt', y='cumulative_wins', marker='o')  # plot cumulative wins across dates
     plt.title(f"Cumulative Wins for {club.title()} in ({season}) Season")
     plt.xlabel("Match Date")
-    plt.ylabel("Cumulative Wins")   
+    plt.ylabel("Cumulative Wins")
+
+def save_visualization(club_df, club, season, output_path):
+    plt.figure(figsize=(20, 18))
+    visualize(club_df, club, season)
+    plt.savefig(output_path)
+    plt.close()
