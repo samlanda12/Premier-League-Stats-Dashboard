@@ -15,6 +15,7 @@ def index():
 
     message = None
     plot_url = None
+    download_url = None
     stats_summary = None
     player_df = None
     player_table = None
@@ -43,6 +44,7 @@ def index():
                     plot_filename = 'static/plots/player_compare.png'
                     save_player_comparison_viz(compare_df_peak, compare_df_full, [match1[0], match2[0]], plot_filename, gs)
                     plot_url = plot_filename
+                    download_url = plot_filename
                     player1 = match1[0]
                     player2 = match2[0]
                 else:
@@ -72,6 +74,7 @@ def index():
                     plot_filename = 'static/plots/player_plot.png'
                     save_player_visualization(player_df, club, club_df, season, plot_filename)
                     plot_url = plot_filename
+                    download_url = plot_filename
             else:
                 if club_df.empty:
                     message = f"No match data available for {club.title()} in season {season}."
@@ -79,6 +82,7 @@ def index():
                     plot_filename = 'static/plots/club_plot.png'
                     save_visualization(club_df, club, season, plot_filename, player_df=player_df, all_players=players)  # pass all_players
                     plot_url = plot_filename
+                    download_url = plot_filename
                     stats_summary = generate_stats_summary(club_df, club)
 
     return render_template(
@@ -86,6 +90,7 @@ def index():
         season_options=season_options,
         club_options=club_options,
         plot_url=plot_url,
+        download_url=download_url,
         message=message,
         stats_summary=stats_summary,
         club=club,

@@ -61,6 +61,12 @@
             {% endif %}
         </div>
         <img src="{{ plot_url }}" alt="Visualization">
+
+        {% if download_url %}
+            <a href="{{ url_for('static', filename=download_url.split('static/')[1]) }}" download>
+                <button>Download Visualization</button>
+            </a>
+        {% endif %}
     {% endif %}
 
     {% if player_table and view_mode == 'player' %}

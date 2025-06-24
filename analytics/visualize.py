@@ -24,7 +24,7 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
                 plt.axvline(x=season_start, color='red', linestyle='--')  # mark selected season
                 plt.title(f"Avg Market Value Over Time for {club.title()}")
                 plt.xlabel("Season")
-                plt.ylabel("Avg Market Value (€)")
+                plt.ylabel("Avg Market Value (10M€)")
             else:
                 plt.title("No Market Value Data for Selected Season")
                 plt.axis('off')  # hide chart if season missing

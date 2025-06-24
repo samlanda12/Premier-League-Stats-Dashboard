@@ -167,3 +167,14 @@ footer {
     text-decoration: underline;
     color: #ffffff;
 }
+
+a button {
+    margin-top: 15px;
+    background-color: #2e7d32;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+a button:hover {
+    background-color: #1b5e20;
+}
