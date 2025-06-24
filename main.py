@@ -52,6 +52,34 @@ def index():
             else:
                 message = "Please enter two player names to compare."
 
+        elif view_mode == 'compare_team':
+            club1 = request.form.get('club1', '').strip().lower()
+            club2 = request.form.get('club2', '').strip().lower()
+            season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')
+
+            if season == "all":
+                df1 = gs[(gs['home_team'] == club1) | (gs['away_team'] == club1)]
+                df2 = gs[(gs['home_team'] == club2) | (gs['away_team'] == club2)]
+                pd1 = players[players['Club'] == club1]
+                pd2 = players[players['Club'] == club2]
+            else:
+                season_start = season.split('-')[0]
+                df1 = filter_club_season(gs, club1, season)
+                df2 = filter_club_season(gs, club2, season)
+                pd1 = players[(players['Club'] == club1) & (players['Season'] == season_start)]
+                pd2 = players[(players['Club'] == club2) & (players['Season'] == season_start)]
+
+            save_visualization(df1, club1, season, 'static/plots/club1_plot.png', player_df=pd1, all_players=players)
+            save_visualization(df2, club2, season, 'static/plots/club2_plot.png', player_df=pd2, all_players=players)
+
+            plot_url = ['static/plots/club1_plot.png', 'static/plots/club2_plot.png']
+            download_url = plot_url
+            stats_summary = {
+                club1.title(): generate_stats_summary(df1, club1),
+                club2.title(): generate_stats_summary(df2, club2)
+            }
+            club = [club1, club2]
+
         else:
             club = request.form.get('club', '').strip().lower()
             season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')  # normalize season input
