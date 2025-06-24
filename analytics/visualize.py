@@ -110,20 +110,23 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
     plt.subplot(2, 3, 2)  # plot age vs market value scatterplot
     player_df['Age'] = pd.to_numeric(player_df['Age'], errors='coerce')
     player_df['Market Value (€)'] = pd.to_numeric(player_df['Market Value (€)'], errors='coerce')
-    sns.scatterplot(data=player_df, x='Age', y='Market Value (€)', hue='Position')
+    mv_scale = 1e7  # scale factor for 10M€
+    player_df['Market Value Scaled'] = player_df['Market Value (€)'] / mv_scale
+    sns.scatterplot(data=player_df, x='Age', y='Market Value Scaled', hue='Position')
     plt.title('Age vs Market Value')
     plt.xlabel('Age')
     plt.ylabel('Market Value (10M€)')
 
     plt.subplot(2, 3, 3)  # plot market value distribution as histogram
-    sns.histplot(player_df['Market Value (€)'].dropna(), bins=20, color='green')
+    sns.histplot(player_df['Market Value Scaled'].dropna(), bins=20, color='green')
     plt.title('Market Value Distribution')
     plt.xlabel('Market Value (10M€)')
     plt.ylabel('Player Count')
 
     top5 = player_df.nlargest(5, 'Market Value (€)')  # get top 5 players by market value
+    top5['Market Value Scaled'] = top5['Market Value (€)'] / mv_scale
     plt.subplot(2, 3, 4)  # plot top 5 market value players
-    sns.barplot(data=top5, x='Market Value (€)', y='Name', orient='h')
+    sns.barplot(data=top5, x='Market Value Scaled', y='Name', orient='h')
     plt.title('Top 5 Most Valuable Players')
     plt.xlabel('Market Value (10M€)')
     plt.ylabel('Player')
@@ -139,6 +142,96 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
     nationality_counts.plot.pie(autopct='%1.1f%%', startangle=90)
     plt.title(f'Nationality Breakdown ({season})')
     plt.ylabel("")
+
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def save_player_comparison_viz(compare_df_peak, compare_df_full, selected_players, output_path, gs):
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(12, 15))  # set figure size with 3 stacked rows
+
+    # copy dataframes to avoid modifying originals
+    compare_df_peak = compare_df_peak.copy()
+    compare_df_full = compare_df_full.copy()
+
+    # ensure correct formats
+    for df in [compare_df_peak, compare_df_full]:
+        df['Market Value (€)'] = pd.to_numeric(df['Market Value (€)'], errors='coerce')
+        df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
+        df['Club'] = df['Club'].str.title()
+
+    # all-time win percentage calculation using results_trimmed.csv
+    win_percents = []
+    for _, row in compare_df_peak.iterrows():
+        club_name = row['Club'].lower().strip()  # normalize for match
+        club_games = gs[
+            (gs['home_team'] == club_name) |
+            (gs['away_team'] == club_name)
+        ]
+        if not club_games.empty:
+            wins = (club_games['winner'] == club_name).sum()
+            win_pct = round(100 * wins / len(club_games), 1)
+        else:
+            win_pct = '-'
+        win_percents.append(win_pct)
+    compare_df_peak['All-Time Win %'] = win_percents # attach win % to peak df
+
+    # calculate total goals using eng-premier-league.csv scoring_player column
+    try:
+        epg = pd.read_csv("data/eng-premier-league.csv")
+        goal_counts = epg['scoring_player'].value_counts()
+        compare_df_peak['Goals'] = compare_df_peak['Name'].map(goal_counts).fillna(0).astype(int)
+    except Exception as e:
+        compare_df_peak['Goals'] = 'Unavailable'
+
+    #peak mv barplot
+    plt.subplot(3, 1, 1)
+    ax1 = sns.barplot(data=compare_df_peak, x='Market Value (€)', y='Name', palette='viridis')
+    plt.title("Peak Market Value Comparison")
+    plt.xlabel("Market Value (in € Millions)")
+    plt.ylabel("Player")
+
+    # convert x-axis ticks from raw euros to millions
+    xticks = ax1.get_xticks()
+    ax1.set_xticklabels([f"{int(x / 1e6)}" for x in xticks])
+
+    # add season annotation next to each bar
+    for i, row in compare_df_peak.iterrows():
+        ax1.text(row['Market Value (€)'] + 1e6, i, f"({row['Season']})", va='center', fontsize=9, color='black')
+
+    #mv by age scatterplot
+    plt.subplot(3, 1, 2)
+    ax2 = sns.scatterplot(data=compare_df_full, x='Age', y='Market Value (€)', hue='Name', s=150)
+    plt.title("Market Value by Age Over Career")
+    plt.xlabel("Age")
+    plt.ylabel("Market Value (in € Millions)")
+
+    # convert y-axis ticks from euros to millions
+    yticks = ax2.get_yticks()
+    ax2.set_yticklabels([f"{int(y / 1e6)}" for y in yticks])
+    plt.legend(title='Player')
+
+    #player info table
+    plt.subplot(3, 1, 3)
+    # build summary table with relevant fields
+    table_data = compare_df_peak[[
+        'Name', 'Age', 'Position', 'Nationality', 'Season', 'Club', 'Goals', 'All-Time Win %'
+    ]].set_index('Name')
+
+    # convert cell contents to strings
+    cell_text = [[str(v) for v in row] for row in table_data.values]
+
+    plt.axis('off')  # hide axes for clean table
+    table = plt.table(cellText=cell_text,
+                      rowLabels=table_data.index,
+                      colLabels=table_data.columns,
+                      cellLoc='center',
+                      loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.1, 2.0)  # adjust scale for readability
+    plt.title('Player Info')
 
     plt.tight_layout()
     plt.savefig(output_path)

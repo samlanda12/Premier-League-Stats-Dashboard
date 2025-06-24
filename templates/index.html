@@ -13,42 +13,60 @@
 
     <!--form-->
     <form method="POST">
-        <label for="season">Select Season:</label>
-        <select name="season" id="season" required>
-            {% for season in season_options %}
-                <option value="{{ season }}" {% if season == season %}selected{% endif %}>{{ season }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="club">Select Club:</label>
-        <select name="club" id="club" required>
-            {% for c in club_options %}
-                <option value="{{ c }}" {% if c == club %}selected{% endif %}>{{ c.title() }}</option>
-            {% endfor %}
-        </select>
-
         <label for="view_mode">View Mode:</label>
         <select name="view_mode" id="view_mode">
             <option value="team" {% if view_mode == 'team' %}selected{% endif %}>Team Stats</option>
             <option value="player" {% if view_mode == 'player' %}selected{% endif %}>Player Stats</option>
+            <option value="compare" {% if view_mode == 'compare' %}selected{% endif %}>Compare Players</option>
         </select>
+
+        {% if view_mode == 'compare' %}
+            <label for="player1">Player 1 Name:</label>
+            <input type="text" name="player1" id="player1" value="{{ player1 or '' }}" required>
+
+            <label for="player2">Player 2 Name:</label>
+            <input type="text" name="player2" id="player2" value="{{ player2 or '' }}" required>
+        {% else %}
+            <label for="season">Select Season:</label>
+            <select name="season" id="season" required>
+                {% for season in season_options %}
+                    <option value="{{ season }}" {% if season == season %}selected{% endif %}>{{ season }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="club">Select Club:</label>
+            <select name="club" id="club" required>
+                {% for c in club_options %}
+                    <option value="{{ c }}" {% if c == club %}selected{% endif %}>{{ c.title() }}</option>
+                {% endfor %}
+            </select>
+        {% endif %}
 
         <button type="submit" id="generate-button">Generate Stats</button>
     </form>
 
     {% if plot_url %}
         <div class="club-section">
-            <img src="{{ url_for('static', filename='club_logos/' + request.form.club.replace(' ', '_').lower() + '.png') }}"
-                alt="{{ club }} logo"
-                class="club-logo"><br>
-            <h2 class="club-title">{{ club.title() }} – {{ 'Team' if view_mode == 'team' else 'Player' }} Stats ({{ season }})</h2>
+            {% if club %}
+                <img src="{{ url_for('static', filename='club_logos/' + club.replace(' ', '_') + '.png') }}"
+                    alt="{{ club }} logo"
+                    class="club-logo"><br>
+                <h2 class="club-title">{{ club.title() }} – 
+                    {% if view_mode == 'team' %}Team Stats{% elif view_mode == 'player' %}Player Stats{% else %}Comparison{% endif %}
+                    ({{ season if season else '' }})
+                </h2>
+            {% elif view_mode == 'compare' and player1 and player2 %}
+                <h2 class="club-title">Comparison – {{ player1 }} vs {{ player2 }}</h2>
+            {% endif %}
         </div>
         <img src="{{ plot_url }}" alt="Visualization">
     {% endif %}
 
     {% if player_table and view_mode == 'player' %}
     <div class="player-table-section">
-        <h3>Full Squad for {{ club.title() }} ({{ season }})</h3>
+        {% if club and season %}
+            <h3>Full Squad for {{ club.title() }} ({{ season }})</h3>
+        {% endif %}
         <table class="player-table">
             <tr>
                 <th>Name</th>
@@ -74,7 +92,7 @@
         <p class="message">{{ message }}</p>
     {% endif %}
 
-    {% if stats_summary and view_mode == 'team' %}
+    {% if stats_summary and view_mode == 'team' and club %}
         <div class="stats-summary">
             <h3>Stats Summary for {{ club.title() }} - Season {{ season }}</h3>
             <ul>
