@@ -16,37 +16,65 @@
         <label for="season">Select Season:</label>
         <select name="season" id="season" required>
             {% for season in season_options %}
-                <option value="{{ season }}">{{ season }}</option>
+                <option value="{{ season }}" {% if season == season %}selected{% endif %}>{{ season }}</option>
             {% endfor %}
         </select>
 
         <label for="club">Select Club:</label>
-        <select name="club" id="club" class="club-dropdown" required>
-            {% for club in club_options %}
-                <option value="{{ club }}" {% if request.form.club == club %}selected{% endif %}>
-                    {{ club.title() }}
-                </option>
+        <select name="club" id="club" required>
+            {% for c in club_options %}
+                <option value="{{ c }}" {% if c == club %}selected{% endif %}>{{ c.title() }}</option>
             {% endfor %}
+        </select>
+
+        <label for="view_mode">View Mode:</label>
+        <select name="view_mode" id="view_mode">
+            <option value="team" {% if view_mode == 'team' %}selected{% endif %}>Team Stats</option>
+            <option value="player" {% if view_mode == 'player' %}selected{% endif %}>Player Stats</option>
         </select>
 
         <button type="submit" id="generate-button">Generate Stats</button>
     </form>
 
     {% if plot_url %}
-    <div class="club-section">
-        <img src="{{ url_for('static', filename='club_logos/' + request.form.club.replace(' ', '_').lower() + '.png') }}"
-            alt="{{ club }} logo"
-            class="club-logo"><br>
-        <h2 class="club-title">{{ club.title() }} - Season {{ season }}</h2>
+        <div class="club-section">
+            <img src="{{ url_for('static', filename='club_logos/' + request.form.club.replace(' ', '_').lower() + '.png') }}"
+                alt="{{ club }} logo"
+                class="club-logo"><br>
+            <h2 class="club-title">{{ club.title() }} – {{ 'Team' if view_mode == 'team' else 'Player' }} Stats ({{ season }})</h2>
+        </div>
+        <img src="{{ plot_url }}" alt="Visualization">
+    {% endif %}
+
+    {% if player_table and view_mode == 'player' %}
+    <div class="player-table-section">
+        <h3>Full Squad for {{ club.title() }} ({{ season }})</h3>
+        <table class="player-table">
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Position</th>
+                <th>Nationality</th>
+                <th>Market Value (€)</th>
+            </tr>
+            {% for player in player_table %}
+            <tr>
+                <td><a href="{{ player['Profile URL'] }}" target="_blank">{{ player['Name'] }}</a></td>
+                <td>{{ player['Age'] }}</td>
+                <td>{{ player['Position'] }}</td>
+                <td>{{ player['Nationality'] }}</td>
+                <td>{{ player['Market Value (€)'] if player['Market Value (€)'] == player['Market Value (€)'] else 'Unavailable' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
     </div>
-        <img src="{{ url_for('static', filename='plots/club_plot.png') }}" alt="Club Stats Plot">
     {% endif %}
 
     {% if message %}
         <p class="message">{{ message }}</p>
     {% endif %}
 
-    {% if stats_summary %}
+    {% if stats_summary and view_mode == 'team' %}
         <div class="stats-summary">
             <h3>Stats Summary for {{ club.title() }} - Season {{ season }}</h3>
             <ul>
