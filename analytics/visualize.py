@@ -56,9 +56,8 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
     plt.ylabel("Goals Scored")
 
     plt.subplot(3, 2, 4)  # make fourth viz
-    club_df['goal_difference'] = club_df.apply(
-        lambda x: x['gh'] - x['ga'] if x['home_team'] == club else x['ga'] - x['gh'],
-        axis=1)  # make goal difference field
+    is_home = club_df['home_team'] == club
+    club_df['goal_difference'] = (is_home * (club_df['gh'] - club_df['ga'])) + (~is_home * (club_df['ga'] - club_df['gh'])) # make goal difference field
     sns.histplot(data=club_df, x='goal_difference', bins=8)  # plot goal difference distribution
     plt.title(f"Goal Difference Distribution for {club.title()} in ({season}) Season")
     plt.xlabel("Goal Difference")
@@ -92,20 +91,29 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
     plt.figure(figsize=(24, 12))
 
     plt.subplot(2, 3, 1)  # plot player scoring breakdown as barplot, using top 10 values from scoring_player
-    club_goals = club_df[club_df['scoring_team'] == club]
-    top_scorers = club_goals['scoring_player'].value_counts().index[:10]
-    if len(top_scorers) == 0:
-        plt.title(f"No scorer data found for {club.title()} in ({season}) Season")
+    if 'scoring_player' not in club_df.columns or 'scoring_team' not in club_df.columns: # defensive check for column existence
+        plt.title(f"No scorer data available for {club.title()} in ({season}) Season")
     else:
-        sns.countplot(
-            data=club_goals[club_goals['scoring_player'].isin(top_scorers)],
-            y='scoring_player',
-            order=top_scorers,
-            color='orange'
-        )
-        plt.title(f"Top Scorers for {club.title()} in ({season}) Season")
-        plt.xlabel("Goals")
-        plt.ylabel("Player")
+        club_df['scoring_team'] = club_df['scoring_team'].str.strip().str.lower()  # normalize
+        club_goals = club_df[club_df['scoring_team'] == club]  # filter by normalized club
+        club_goals = club_goals[club_goals['scoring_player'].notna()]  # drop nulls
+
+        if club_goals.empty:
+            plt.title(f"No scorer data found for {club.title()} in ({season}) Season")
+        else:
+            top_scorers = club_goals['scoring_player'].value_counts().index[:10]
+            if len(top_scorers) == 0:
+                plt.title(f"No scorer data found for {club.title()} in ({season}) Season")
+            else:
+                sns.countplot(
+                    data=club_goals[club_goals['scoring_player'].isin(top_scorers)],
+                    y='scoring_player',
+                    order=top_scorers,
+                    color='orange'
+                )
+                plt.title(f"Top Scorers for {club.title()} in ({season}) Season")
+                plt.xlabel("Goals")
+                plt.ylabel("Player")
 
     plt.subplot(2, 3, 2)  # plot age vs market value scatterplot
     player_df['Age'] = pd.to_numeric(player_df['Age'], errors='coerce')
@@ -123,7 +131,12 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
     plt.xlabel('Market Value (10M€)')
     plt.ylabel('Player Count')
 
-    top5 = player_df.nlargest(5, 'Market Value (€)')  # get top 5 players by market value
+    top5 = (
+        player_df.sort_values('Market Value (€)', ascending=False)  # sort by value
+        .dropna(subset=['Market Value (€)'])  # drop rows with no value
+        .drop_duplicates('Name')  # ensure uniqueness by player
+        .head(5)  # take top 5
+    )
     top5['Market Value Scaled'] = top5['Market Value (€)'] / mv_scale
     plt.subplot(2, 3, 4)  # plot top 5 market value players
     sns.barplot(data=top5, x='Market Value Scaled', y='Name', orient='h')

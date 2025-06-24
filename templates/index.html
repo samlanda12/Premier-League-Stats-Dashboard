@@ -29,8 +29,9 @@
         {% else %}
             <label for="season">Select Season:</label>
             <select name="season" id="season" required>
+                <option value="all">All Time</option>
                 {% for season in season_options %}
-                    <option value="{{ season }}" {% if season == season %}selected{% endif %}>{{ season }}</option>
+                    <option value="{{ season }}">{{ season }}</option>
                 {% endfor %}
             </select>
 

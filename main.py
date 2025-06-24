@@ -52,11 +52,15 @@ def index():
 
         else:
             club = request.form.get('club', '').strip().lower()
-            season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')  # normalize form input for season
-            season_start = season.split('-')[0]  # extract just the start year for player matching
+            season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')  # normalize season input
 
-            club_df = filter_club_season(gs, club, season)
-            player_df = players[(players['Club'] == club) & (players['Season'] == season_start)]
+            if season == "all":
+                club_df = gs[(gs['home_team'] == club) | (gs['away_team'] == club)]
+                player_df = players[players['Club'] == club]
+            else:
+                season_start = season.split('-')[0]
+                club_df = filter_club_season(gs, club, season)
+                player_df = players[(players['Club'] == club) & (players['Season'] == season_start)]
 
             if not player_df.empty:
                 player_table = player_df.to_dict(orient='records')  # prepare player table for rendering
