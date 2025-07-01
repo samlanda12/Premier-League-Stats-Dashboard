@@ -94,13 +94,16 @@ def main():
             continue
 
         for season in seasons: #loop through each season
-            if not (2014 <= int(season) <= 2024): #only scrape seasons 2014-2024
+            if not (1989 <= int(season) <= 2024): #only scrape desired seasons
                 continue
             print(f"   Scraping {season}...", end="")
             try:
                 rows = scrape_squad(club, slug, club_id, season) #scrape squad for the season
-                all_rows.extend(rows) #add data to the main list
-                print(f"{len(rows)} players")
+                if not rows:
+                    print("no players found.")
+                else:
+                    all_rows.extend(rows) #add data to the main list
+                    print(f"{len(rows)} players")
             except Exception as e:
                 print(f"Error: {e}")
         
