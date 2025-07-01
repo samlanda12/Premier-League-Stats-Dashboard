@@ -4,6 +4,7 @@ from analytics.data_clean import clean_team_names, TEAM_NAME_FIXES
 def load_data():
     df = pd.read_csv('data/results_trimmed.csv')
     gs = pd.read_csv('data/eng-premier-league.csv')
+    players = pd.read_csv('data/player_data_prem.csv')  # load player dataset
 
     #clean 'game' field for home/away
     teams = gs['game'].str.split('vs.', expand=True)
@@ -53,4 +54,9 @@ def load_data():
     gs.loc[gs['gh'] < gs['ga'], 'winner'] = gs['away_team']
     gs.loc[gs['gh'] == gs['ga'], 'winner'] = 'Draw'
 
-    return gs
+    # normalize player data for club and season format matching
+    players['Club'] = players['Club'].str.lower().str.strip()  # ensure lowercase club name
+    players['Season'] = players['Season'].astype(str).str.strip().str.replace('–', '-').str.replace('/', '-')  # normalize season format like '2023–2024' to '2023-2024'
+    players['Age'] = pd.to_numeric(players['Age'], errors='coerce')  # convert age to numeric
+
+    return gs, players
