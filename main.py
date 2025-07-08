@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, current_app
 from analytics.visualize import save_visualization, save_player_visualization, save_player_comparison_viz
 from analytics.stats import generate_stats_summary, filter_club_season
+import pandas as pd
 import difflib  # added for fuzzy name matching
+from classes import League  # import League class
 
 main_bp = Blueprint('main', __name__)
 
@@ -9,6 +11,7 @@ main_bp = Blueprint('main', __name__)
 def index():
     gs = current_app.config['GS_DATA']
     players = current_app.config['PLAYER_DATA']
+    league = current_app.config['LEAGUE']
 
     season_options = sorted(gs['season'].dropna().unique())
     club_options = sorted(set(gs['home_team'].dropna()) | set(gs['away_team'].dropna()))
@@ -34,7 +37,7 @@ def index():
 
             if player1 and player2:
                 all_names = players['Name'].dropna().unique().tolist()
-                match1 = difflib.get_close_matches(player1, all_names, n=1, cutoff=0.7) #fuzzy matching
+                match1 = difflib.get_close_matches(player1, all_names, n=1, cutoff=0.7)
                 match2 = difflib.get_close_matches(player2, all_names, n=1, cutoff=0.7)
 
                 if match1 and match2:
@@ -58,16 +61,16 @@ def index():
             season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')
 
             if season == "all":
-                df1 = gs[(gs['home_team'] == club1) | (gs['away_team'] == club1)]
-                df2 = gs[(gs['home_team'] == club2) | (gs['away_team'] == club2)]
-                pd1 = players[players['Club'] == club1]
-                pd2 = players[players['Club'] == club2]
+                df1 = league.get_all_matches(club1)
+                df2 = league.get_all_matches(club2)
+                #helper to get all player data across all seasons as df
+                pd1 = pd.DataFrame(league.get_all_players(club1))
+                pd2 = pd.DataFrame(league.get_all_players(club2))
             else:
-                season_start = season.split('-')[0]
-                df1 = filter_club_season(gs, club1, season)
-                df2 = filter_club_season(gs, club2, season)
-                pd1 = players[(players['Club'] == club1) & (players['Season'] == season_start)]
-                pd2 = players[(players['Club'] == club2) & (players['Season'] == season_start)]
+                df1 = league.get_season(club1, season).match_df
+                df2 = league.get_season(club2, season).match_df
+                pd1 = pd.DataFrame([p.to_dict() for p in league.get_season(club1, season).squad])
+                pd2 = pd.DataFrame([p.to_dict() for p in league.get_season(club2, season).squad])
 
             save_visualization(df1, club1, season, 'static/plots/club1_plot.png', player_df=pd1, all_players=players)
             save_visualization(df2, club2, season, 'static/plots/club2_plot.png', player_df=pd2, all_players=players)
@@ -82,18 +85,21 @@ def index():
 
         else:
             club = request.form.get('club', '').strip().lower()
-            season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')  # normalize season input
+            season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')
 
             if season == "all":
-                club_df = gs[(gs['home_team'] == club) | (gs['away_team'] == club)]
-                player_df = players[players['Club'] == club]
+                #helper to get all match data across all seasons as df
+                club_df = league.get_all_matches(club)
+                #helper to get all players across all seasons for club
+                player_df = pd.DataFrame(league.get_all_players(club))
             else:
-                season_start = season.split('-')[0]
-                club_df = filter_club_season(gs, club, season)
-                player_df = players[(players['Club'] == club) & (players['Season'] == season_start)]
+                club_df = league.get_season(club, season).match_df
+                player_df = pd.DataFrame([
+                    p.to_dict() for p in league.get_season(club, season).squad
+                ])
 
             if not player_df.empty:
-                player_table = player_df.to_dict(orient='records')  # prepare player table for rendering
+                player_table = player_df.to_dict(orient='records')
 
             if view_mode == 'player':
                 if player_df.empty:
@@ -108,10 +114,11 @@ def index():
                     message = f"No match data available for {club.title()} in season {season}."
                 else:
                     plot_filename = 'static/plots/club_plot.png'
-                    save_visualization(club_df, club, season, plot_filename, player_df=player_df, all_players=players)  # pass all_players
+                    save_visualization(club_df, club, season, plot_filename, player_df=player_df, all_players=players)
                     plot_url = plot_filename
                     download_url = plot_filename
-                    stats_summary = generate_stats_summary(club_df, club)
+                    #compute and retrieve season summary for this club
+                    stats_summary = league.get_season(club, season).get_summary()
 
     return render_template(
         'index.html',
