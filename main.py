@@ -13,8 +13,8 @@ def index():
     players = current_app.config['PLAYER_DATA']
     league = current_app.config['LEAGUE']
 
-    season_options = sorted(gs['season'].dropna().unique())
     club_options = sorted(set(gs['home_team'].dropna()) | set(gs['away_team'].dropna()))
+    season_options = sorted(gs['season'].dropna().unique())  # default fallback
 
     message = None
     plot_url = None
@@ -86,6 +86,10 @@ def index():
         else:
             club = request.form.get('club', '').strip().lower()
             season = request.form.get('season', '').strip().replace('–', '-').replace('/', '-')
+
+            #replace static list with valid season list for selected club
+            if club:
+                season_options = league.get_valid_seasons(club)
 
             if season == "all":
                 #helper to get all match data across all seasons as df

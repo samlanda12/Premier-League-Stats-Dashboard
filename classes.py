@@ -27,7 +27,7 @@ class Season: #holds match data, player squad, and stats summary for a specific 
         self.year = str(year)  # full season string (2022-2023)
         self.match_df = match_df
         self.squad = squad or []  # list of player objects
-        self.summary = {}  # do NOT generate on init anymore
+        self.summary = {}
 
     def _generate_summary(self): #use match data to compute stats summary
         team_name = self.match_df['home_team'].iloc[0]
@@ -47,24 +47,26 @@ class League: #stores data paths and gives lazy access to club/season data
         self.players = None
         self.club_seasons = {}
 
-    def load(self): #load raw data and build club-season index only
+    def load(self): #load raw data only
         from analytics.data_load import load_data
         self.gs, self.players = load_data()
 
-        clubs = sorted(set(self.gs['home_team'].dropna()) | set(self.gs['away_team'].dropna()))
-        seasons = sorted(self.gs['season'].dropna().unique())
+    def get_valid_seasons(self, club): #compute valid seasons lazily for a given club
+        if self.gs is None:
+            return []
 
-        for club in clubs:
-            valid_seasons = []
-            for season in seasons:
-                season_str = str(season)
-                season_start = season_str.split('-')[0]
-                club_df = filter_club_season(self.gs, club, season_str)
-                player_df = self.players[(self.players['Club'] == club) & (self.players['Season'] == season_start)]
-                if not club_df.empty or not player_df.empty:
-                    valid_seasons.append(season_str)
-            if valid_seasons:
-                self.club_seasons[club] = valid_seasons
+        all_seasons = sorted(self.gs['season'].dropna().unique())
+        valid = []
+        for season in all_seasons:
+            season_str = str(season)
+            season_start = season_str.split('-')[0]
+            club_df = filter_club_season(self.gs, club, season_str)
+            player_df = self.players[
+                (self.players['Club'] == club) & (self.players['Season'] == season_start)
+            ]
+            if not club_df.empty or not player_df.empty:
+                valid.append(season_str)
+        return valid
 
     def get_season(self, club, season): #construct Season object on-demand for club + season
         season_str = str(season)
@@ -86,7 +88,7 @@ class League: #stores data paths and gives lazy access to club/season data
         return Season(season_str, match_df=club_df, squad=squad)
 
     def get_all_matches(self, club): #return a combined df of matches across all seasons for a given club
-        all_seasons = self.club_seasons.get(club, [])
+        all_seasons = self.get_valid_seasons(club)
         dfs = [filter_club_season(self.gs, club, s) for s in all_seasons]
         return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
