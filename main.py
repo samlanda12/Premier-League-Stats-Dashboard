@@ -9,12 +9,12 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/', methods=['GET', 'POST'])
 def index():
-    gs = current_app.config['GS_DATA']
-    players = current_app.config['PLAYER_DATA']
     league = current_app.config['LEAGUE']
 
-    club_options = sorted(set(gs['home_team'].dropna()) | set(gs['away_team'].dropna()))
-    season_options = sorted(gs['season'].dropna().unique())  # default fallback
+    #lazy load clubs for dropdown
+    club_df = league.get_combined_match_df()
+    club_options = sorted(set(club_df['home_team'].dropna()) | set(club_df['away_team'].dropna()))
+    season_options = sorted(club_df['season'].dropna().unique())  # default fallback
 
     message = None
     plot_url = None
@@ -36,15 +36,19 @@ def index():
             player2 = request.form.get('player2', '').strip()
 
             if player1 and player2:
-                all_names = players['Name'].dropna().unique().tolist()
+                # lazy player access for matching
+                with league._connect() as conn:
+                    all_players = pd.read_sql("SELECT * FROM players", conn)
+                all_names = all_players['Name'].dropna().unique().tolist()
                 match1 = difflib.get_close_matches(player1, all_names, n=1, cutoff=0.7)
                 match2 = difflib.get_close_matches(player2, all_names, n=1, cutoff=0.7)
 
                 if match1 and match2:
-                    compare_df_full = players[players['Name'].isin([match1[0], match2[0]])].copy()
+                    compare_df_full = all_players[all_players['Name'].isin([match1[0], match2[0]])].copy()
                     compare_df_peak = compare_df_full.sort_values('Market Value (€)', ascending=False).drop_duplicates('Name')
 
                     plot_filename = 'static/plots/player_compare.png'
+                    gs = league.get_combined_match_df()
                     save_player_comparison_viz(compare_df_peak, compare_df_full, [match1[0], match2[0]], plot_filename, gs)
                     plot_url = plot_filename
                     download_url = plot_filename
@@ -72,8 +76,10 @@ def index():
                 pd1 = pd.DataFrame([p.to_dict() for p in league.get_season(club1, season).squad])
                 pd2 = pd.DataFrame([p.to_dict() for p in league.get_season(club2, season).squad])
 
-            save_visualization(df1, club1, season, 'static/plots/club1_plot.png', player_df=pd1, all_players=players)
-            save_visualization(df2, club2, season, 'static/plots/club2_plot.png', player_df=pd2, all_players=players)
+            with league._connect() as conn:
+                all_players = pd.read_sql("SELECT * FROM players", conn)
+            save_visualization(df1, club1, season, 'static/plots/club1_plot.png', player_df=pd1, all_players=all_players)
+            save_visualization(df2, club2, season, 'static/plots/club2_plot.png', player_df=pd2, all_players=all_players)
 
             plot_url = ['static/plots/club1_plot.png', 'static/plots/club2_plot.png']
             download_url = plot_url
@@ -118,7 +124,9 @@ def index():
                     message = f"No match data available for {club.title()} in season {season}."
                 else:
                     plot_filename = 'static/plots/club_plot.png'
-                    save_visualization(club_df, club, season, plot_filename, player_df=player_df, all_players=players)
+                    with league._connect() as conn:
+                        all_players = pd.read_sql("SELECT * FROM players", conn)
+                    save_visualization(club_df, club, season, plot_filename, player_df=player_df, all_players=all_players)
                     plot_url = plot_filename
                     download_url = plot_filename
                     #compute and retrieve season summary for this club
