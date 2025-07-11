@@ -4,8 +4,9 @@ from analytics.data_load import load_data
 
 app = Flask(__name__)
 
-gs_data = load_data()  # load data once at startup
+gs_data, player_data = load_data()  # load data once at startup
 app.config['GS_DATA'] = gs_data  #store data in app config
+app.config['PLAYER_DATA'] = player_data
 
 app.register_blueprint(main_bp)
 
