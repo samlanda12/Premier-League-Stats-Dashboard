@@ -9,7 +9,7 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
     plt.figure(figsize=(20, 18))  # make dashboard for multiple viz
 
     plt.subplot(3, 2, 1)  # market value over seasons for the club
-    if all_players is not None:
+    if all_players is not None and all(col in all_players.columns for col in ['Season', 'Club', 'Market Value (€)']):
         all_players['Season'] = all_players['Season'].astype(str).str.split('-').str[0]  # normalize season format to just start year
         all_players['Market Value (€)'] = pd.to_numeric(all_players['Market Value (€)'], errors='coerce')  # clean market value
         all_players['Club'] = all_players['Club'].str.lower()  # normalize club name
