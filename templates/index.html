@@ -108,12 +108,17 @@
             <img src="{{ plot_url }}" alt="Visualization">
 
             {% if download_url %}
-                <a href="{{ url_for('static', filename=download_url.split('static/')[1]) }}" download>
-                    <button>Download Visualization</button>
-                </a>
-            {% endif %}
-        {% endif %}
-    {% endif %}
+                {% if view_mode == 'compare_team' and download_url is iterable %}
+                    {% for url in download_url %}
+                        <a href="{{ url_for('static', filename=url.split('static/')[1]) }}" download>
+                            <button>Download Visualization {{ loop.index }}</button>
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    <a href="{{ url_for('static', filename=download_url.split('static/')[1]) }}" download>
+                        <button>Download Visualization</button>
+                    </a>
+                {% endif %}
 
     {% if player_table and view_mode == 'player' %}
     <div class="player-table-section">

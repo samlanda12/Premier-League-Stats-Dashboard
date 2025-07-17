@@ -1,4 +1,3 @@
-
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -25,8 +24,8 @@ def normalize_value(val): #convert market value strings to float
         return None
     val = val.replace("€", "").replace("m", "e6").replace("k", "e3").replace(",", "").strip()
     try:
-        return float(eval(val))
-    except:
+        return float(val)
+    except ValueError:
         return None
 
 def get_season_ids(slug, club_id): #get all available seasons for a club by slug and id
