@@ -9,16 +9,14 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
     plt.figure(figsize=(20, 18))  # make dashboard for multiple viz
 
     plt.subplot(3, 2, 1)  # market value over seasons for the club
-    if all_players is not None:
-        all_players['Season'] = all_players['Season'].astype(str).str.split('-').str[0]  # normalize season format to just start year
-        all_players['Market Value (€)'] = pd.to_numeric(all_players['Market Value (€)'], errors='coerce')  # clean market value
-        all_players['Club'] = all_players['Club'].str.lower()  # normalize club name
+    if all_players is not None and all(col in all_players.columns for col in ['Season', 'Club', 'Market Value (€)']):
+        # data is already normalized in ETL step
         club_mv = all_players[all_players['Club'] == club]  # filter by club
         if not club_mv.empty:
             club_mv = club_mv.groupby('Season')['Market Value (€)'].mean().reset_index()  # average value per season
             club_mv = club_mv.sort_values('Season')  # sort for lineplot
-
-            season_start = str(season).split('-')[0]  # extract start year from selected season
+            club_mv['Season'] = pd.to_numeric(club_mv['Season'], errors='coerce')
+            season_start = int(str(season).split('-')[0])  # extract start year as int
             if season_start in club_mv['Season'].values:
                 sns.lineplot(data=club_mv, x='Season', y='Market Value (€)', marker='o')  # plot market value line
                 plt.axvline(x=season_start, color='red', linestyle='--')  # mark selected season
@@ -116,8 +114,7 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
                 plt.ylabel("Player")
 
     plt.subplot(2, 3, 2)  # plot age vs market value scatterplot
-    player_df['Age'] = pd.to_numeric(player_df['Age'], errors='coerce')
-    player_df['Market Value (€)'] = pd.to_numeric(player_df['Market Value (€)'], errors='coerce')
+    # data is already normalized in ETL step
     mv_scale = 1e7  # scale factor for 10M€
     player_df['Market Value Scaled'] = player_df['Market Value (€)'] / mv_scale
     sns.scatterplot(data=player_df, x='Age', y='Market Value Scaled', hue='Position')
