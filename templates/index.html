@@ -69,7 +69,13 @@
         <button type="submit" id="generate-button">Generate Stats</button>
     </form>
 
-    {% if plot_url %}
+    {% if message %}
+        <div class="error-message">
+            <p class="message">{{ message }}</p>
+        </div>
+    {% endif %}
+
+    {% if plot_url and not message %}
         {% if view_mode == 'compare_team' and club and stats_summary %}
             <div class="side-by-side">
                 <div>
@@ -139,10 +145,6 @@
             {% endfor %}
         </table>
     </div>
-    {% endif %}
-
-    {% if message %}
-        <p class="message">{{ message }}</p>
     {% endif %}
 
     {% if stats_summary and view_mode == 'team' and club %}
