@@ -45,7 +45,10 @@ def index():
 
                 if match1 and match2:
                     compare_df_full = all_players[all_players['Name'].isin([match1[0], match2[0]])].copy()
-                    compare_df_peak = compare_df_full.sort_values('Market Value (€)', ascending=False).drop_duplicates('Name')
+                    compare_df_full = compare_df_full.copy()
+                    compare_df_full['MarketValue'] = compare_df_full['Market Value (€)']
+                    del compare_df_full['Market Value (€)']
+                    compare_df_peak = compare_df_full.sort_values(by='MarketValue', ascending=False).drop_duplicates('Name')
 
                     plot_filename = 'static/plots/player_compare.png'
                     gs = league.get_combined_match_df()
@@ -68,13 +71,13 @@ def index():
                 df1 = league.get_all_matches(club1)
                 df2 = league.get_all_matches(club2)
                 #helper to get all player data across all seasons as df
-                pd1 = pd.DataFrame(league.get_all_players(club1))
-                pd2 = pd.DataFrame(league.get_all_players(club2))
+                pd1 = league.get_all_players_df(club1)
+                pd2 = league.get_all_players_df(club2)
             else:
                 df1 = league.get_season(club1, season).match_df
                 df2 = league.get_season(club2, season).match_df
-                pd1 = pd.DataFrame([p.to_dict() for p in league.get_season(club1, season).squad])
-                pd2 = pd.DataFrame([p.to_dict() for p in league.get_season(club2, season).squad])
+                pd1 = league.get_season(club1, season).get_squad_df()
+                pd2 = league.get_season(club2, season).get_squad_df()
 
             with league._connect() as conn:
                 all_players = pd.read_sql("SELECT * FROM players", conn)
@@ -101,12 +104,10 @@ def index():
                 #helper to get all match data across all seasons as df
                 club_df = league.get_all_matches(club)
                 #helper to get all players across all seasons for club
-                player_df = pd.DataFrame(league.get_all_players(club))
+                player_df = league.get_all_players_df(club)
             else:
                 club_df = league.get_season(club, season).match_df
-                player_df = pd.DataFrame([
-                    p.to_dict() for p in league.get_season(club, season).squad
-                ])
+                player_df = league.get_season(club, season).get_squad_df()
 
             if not player_df.empty:
                 player_table = player_df.to_dict(orient='records')

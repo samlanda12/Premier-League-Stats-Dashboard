@@ -31,13 +31,20 @@ class Season: #holds match data, player squad, and stats summary for a specific 
         self.summary = {}
 
     def _generate_summary(self): #use match data to compute stats summary
-        team_name = self.match_df['home_team'].iloc[0]
-        self.summary = generate_stats_summary(self.match_df, team_name)
+        if self.match_df is not None and not self.match_df.empty:
+            team_name = self.match_df['home_team'].iloc[0]
+            self.summary = generate_stats_summary(self.match_df, team_name)
+        else:
+            self.summary = {}
 
     def get_summary(self): #return the stats summary, generating it if not already done
         if not self.summary and self.match_df is not None and not self.match_df.empty:
             self._generate_summary()
         return self.summary
+
+    def get_squad_df(self):
+        #return the squad as a df
+        return pd.DataFrame([p.to_dict() for p in self.squad])
 
 class League: #stores path to db and lazily queries match/player data
     def __init__(self, db_path):
@@ -122,6 +129,18 @@ class League: #stores path to db and lazily queries match/player data
                 conn, params=(club,)
             )
         return rows.to_dict(orient='records')
+
+    def get_all_players_df(self, club):
+        #return all players across all seasons for a given club as a df
+        with self._connect() as conn:
+            rows = pd.read_sql(
+                f"""
+                SELECT * FROM players
+                WHERE lower(Club) = ?
+                """,
+                conn, params=(club,)
+            )
+        return rows
 
     def get_player_by_fuzzy_name(self, name, n=1, cutoff=0.7): #return closest player match using fuzzy matching
         import difflib

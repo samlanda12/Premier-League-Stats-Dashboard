@@ -1,7 +1,7 @@
 import pandas as pd
 import sqlite3
 from pathlib import Path
-from analytics.data_clean import clean_team_names, TEAM_NAME_FIXES
+from data_clean import clean_team_names, TEAM_NAME_FIXES
 
 Path("data").mkdir(parents=True, exist_ok=True) # ensure parent exists
 
