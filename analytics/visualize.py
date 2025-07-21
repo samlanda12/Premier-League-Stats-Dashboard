@@ -202,7 +202,7 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
             .drop_duplicates('Name')
             .head(5)
         )
-        top5['Market Value Scaled'] = top5['Market Value (€)'] / 1e7
+        top5['Market Value Scaled'] = top5['Market Value (€)'] / mv_scale
         if top5.empty:
             plt.title('No top player value data available')
             plt.axis('off')
