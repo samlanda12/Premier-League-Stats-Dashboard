@@ -162,7 +162,7 @@ def save_player_visualization(player_df, club, club_df, season, output_path):
                 plt.ylabel("Player")
 
     plt.subplot(2, 3, 2)  # plot age vs market value scatterplot
-    if player_df.empty or 'Age' not in player_df.columns or 'Market Value (€)' not in player_df.columns or 'Position' not in player_df.columns:
+    if player_df.empty or any(col not in player_df.columns for col in ['Age', 'Market Value (€)', 'Position']):
         plt.title('No player age/market value data available')
         plt.axis('off')
     else:
