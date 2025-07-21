@@ -8,8 +8,11 @@ def filter_club_season(gs, club, season):
     return club_df
 
 def generate_stats_summary(club_df, club):
+    club = club.strip().lower()
+    home_goals = club_df[club_df['home_team'] == club]['gh'].sum()
+    away_goals = club_df[club_df['away_team'] == club]['ga'].sum()
     return {
-        'Total Goals Scored': int(club_df[club_df['scoring_team'] == club]['gh'].sum() + club_df[club_df['scoring_team'] == club]['ga'].sum()),
+        'Total Goals Scored': int(home_goals + away_goals),
         'Wins': (club_df['winner'] == club).sum(),
         'Draws': (club_df['winner'] == 'Draw').sum(),
         'Losses': len(club_df) - (club_df['winner'] == club).sum() - (club_df['winner'] == 'Draw').sum()
