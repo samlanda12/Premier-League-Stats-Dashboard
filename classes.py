@@ -77,7 +77,7 @@ class League: #stores path to db and lazily queries match/player data
 
     def get_season(self, club, season): #construct Season object on-demand for club + season
         season_str = str(season)
-        season_start = season_str.split('-')[0]
+        season_start = season_str.split('-')[0] if season_str != "all" else None
 
         with self._connect() as conn:
             club_df = pd.read_sql(
@@ -88,13 +88,22 @@ class League: #stores path to db and lazily queries match/player data
                 conn, params=(season_str, club, club)
             )
 
-            player_df = pd.read_sql(
-                f"""
-                SELECT * FROM players
-                WHERE lower(Club) = ? AND Season = ?
-                """,
-                conn, params=(club, season_start)
-            )
+            if season == "all":
+                player_df = pd.read_sql(
+                    """
+                    SELECT * FROM players
+                    WHERE lower(Club) = ?
+                    """,
+                    conn, params=(club,)
+                )
+            else:
+                player_df = pd.read_sql(
+                    """
+                    SELECT * FROM players
+                    WHERE lower(Club) = ? AND Season = ?
+                    """,
+                    conn, params=(club, season_start)
+                )
 
         squad = [Player(
             row.get("Name"),

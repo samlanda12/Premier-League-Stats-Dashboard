@@ -21,7 +21,7 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
                 season_start = int(str(season).split('-')[0])  #extract start year as int
             else:
                 season_start = None 
-            if season_start in club_mv['Season'].values:
+            if season_start and season_start in club_mv['Season'].values:
                 sns.lineplot(data=club_mv, x='Season', y='Market Value (€)', marker='o')  # plot market value line
                 plt.axvline(x=season_start, color='red', linestyle='--')  # mark selected season
                 plt.title(f"Avg Market Value Over Time for {club.title()}")
