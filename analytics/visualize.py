@@ -17,7 +17,10 @@ def visualize(club_df, club, season, player_df=None, all_players=None):
             club_mv = club_mv.groupby('Season')['Market Value (€)'].mean().reset_index()  # average value per season
             club_mv = club_mv.sort_values('Season')  # sort for lineplot
             club_mv['Season'] = pd.to_numeric(club_mv['Season'], errors='coerce')
-            season_start = int(str(season).split('-')[0])  # extract start year as int
+            if season != "all":
+                season_start = int(str(season).split('-')[0])  #extract start year as int
+            else:
+                season_start = None 
             if season_start in club_mv['Season'].values:
                 sns.lineplot(data=club_mv, x='Season', y='Market Value (€)', marker='o')  # plot market value line
                 plt.axvline(x=season_start, color='red', linestyle='--')  # mark selected season
